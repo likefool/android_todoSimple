@@ -1,6 +1,7 @@
 package com.yahoo.simpletodo;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -18,9 +19,11 @@ import java.util.ArrayList;
 
 
 public class MainActivity extends Activity {
+    private final int REQUEST_CODE = 200;
     ArrayList<String> items;
     ArrayAdapter<String> itemsAdapter;
     ListView lvItems;
+    private String editItemText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,6 +62,20 @@ public class MainActivity extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        if (resultCode == RESULT_OK && requestCode == REQUEST_CODE) {
+            String editedText = intent.getExtras().getString("edit_item_text");
+            int position = intent.getIntExtra("position", -1);
+            if (editedText != null && editedText.length() > 0) {
+                items.set(position, editedText);
+                itemsAdapter.notifyDataSetChanged();
+
+                writeItems();
+            }
+        }
+    }
+
     public void onAddItem(View v) {
         EditText etNewItem = (EditText) findViewById(R.id.etNewItem);
         String itemText = etNewItem.getText().toString();
@@ -77,6 +94,19 @@ public class MainActivity extends Activity {
                         itemsAdapter.notifyDataSetChanged();
                         writeItems();
                         return true;
+                    }
+                }
+        );
+
+        lvItems.setOnItemClickListener(
+                new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                        Intent intent = new Intent(MainActivity.this, EditActivity.class);
+                        editItemText = items.get(position);
+                        intent.putExtra("edit_item_text", editItemText);
+                        intent.putExtra("position", position);
+                        startActivityForResult(intent, REQUEST_CODE);
                     }
                 }
         );
