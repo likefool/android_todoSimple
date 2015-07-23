@@ -10,7 +10,7 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Edit Item"
+        android:text="Save"
         android:id="@+id/btnEdit"
         android:onClick="onEdit"
         android:layout_alignParentBottom="true"

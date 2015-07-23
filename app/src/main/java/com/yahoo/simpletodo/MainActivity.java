@@ -2,6 +2,7 @@ package com.yahoo.simpletodo;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.database.sqlite.SQLiteException;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -11,11 +12,8 @@ import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
 
-import org.apache.commons.io.FileUtils;
-
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 
 public class MainActivity extends Activity {
@@ -23,7 +21,11 @@ public class MainActivity extends Activity {
     ArrayList<String> items;
     ArrayAdapter<String> itemsAdapter;
     ListView lvItems;
+    ArrayList<TodoItem> todoItems;
+    ArrayAdapter<TodoItem> todoItemsAdapter;
     private String editItemText;
+    // Create our sqlite database object
+    private TodoItemDatabase db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,11 +33,13 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
         lvItems = (ListView) findViewById(R.id.lvItems);
         //items = new ArrayList<String>();
+        //items.add("First Item");
+        //items.add("Second Item");
+        db = new TodoItemDatabase(this);
         readItems();
         itemsAdapter = new ArrayAdapter<String>(this,android.R.layout.simple_list_item_1, items);
         lvItems.setAdapter(itemsAdapter);
-        //items.add("First Item");
-        //items.add("Second Item");
+
         setupListViewListener();
 
     }
@@ -113,21 +117,41 @@ public class MainActivity extends Activity {
     }
 
     private void readItems() {
-        File filesDir = getFilesDir();
-        File todoFile = new File(filesDir, "todo.txt");
         try {
-            items = new ArrayList<String>(FileUtils.readLines(todoFile));
-        } catch (IOException e) {
+            /*
+             File filesDir = getFilesDir();
+             File todoFile = new File(filesDir, "todo.txt");
+             items = new ArrayList<String>(FileUtils.readLines(todoFile));
+*/
+            items = new ArrayList<String>();
+            List<TodoItem> tItems = db.getAllTodoItems();
+            // Print out properties
+            for (TodoItem ti : tItems) {
+                items.add(ti.getBody());
+            }
+        } catch (SQLiteException e) {
             items = new ArrayList<String>();
         }
     }
 
     private void writeItems() {
-        File filesDir = getFilesDir();
-        File todoFile = new File(filesDir, "todo.txt");
         try {
+            /*
+            File filesDir = getFilesDir();
+            File todoFile = new File(filesDir, "todo.txt");
             FileUtils.writeLines(todoFile, items);
-        } catch (IOException e) {
+            */
+
+            List<TodoItem> tItems = db.getAllTodoItems();
+            // clean db
+            for (TodoItem ti : tItems) {
+                db.deleteTodoItem(ti);
+            }
+            for (String ti : items) {
+                db.addTodoItem(new TodoItem(ti, 3));
+
+            }
+        } catch (SQLiteException e) {
             e.printStackTrace();
         }
     }
