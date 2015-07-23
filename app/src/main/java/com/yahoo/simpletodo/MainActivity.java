@@ -22,7 +22,7 @@ public class MainActivity extends Activity {
     ArrayAdapter<String> itemsAdapter;
     ListView lvItems;
     ArrayList<TodoItem> todoItems;
-    ArrayAdapter<TodoItem> todoItemsAdapter;
+    private TodoAdapter todoItemsAdapter;
     private String editItemText;
     // Create our sqlite database object
     private TodoItemDatabase db;
@@ -36,9 +36,10 @@ public class MainActivity extends Activity {
         //items.add("First Item");
         //items.add("Second Item");
         db = new TodoItemDatabase(this);
-        readItems();
-        itemsAdapter = new ArrayAdapter<String>(this,android.R.layout.simple_list_item_1, items);
-        lvItems.setAdapter(itemsAdapter);
+        readItems(); // fill items, todoItems
+        //itemsAdapter = new ArrayAdapter<String>(this,android.R.layout.simple_list_item_1, items);
+        todoItemsAdapter = new TodoAdapter(this, todoItems);
+        lvItems.setAdapter(todoItemsAdapter);
 
         setupListViewListener();
 
@@ -72,8 +73,8 @@ public class MainActivity extends Activity {
             String editedText = intent.getExtras().getString("edit_item_text");
             int position = intent.getIntExtra("position", -1);
             if (editedText != null && editedText.length() > 0) {
-                items.set(position, editedText);
-                itemsAdapter.notifyDataSetChanged();
+                todoItems.set(position, new TodoItem(editedText, 3));
+                todoItemsAdapter.notifyDataSetChanged();
 
                 writeItems();
             }
@@ -83,7 +84,7 @@ public class MainActivity extends Activity {
     public void onAddItem(View v) {
         EditText etNewItem = (EditText) findViewById(R.id.etNewItem);
         String itemText = etNewItem.getText().toString();
-        itemsAdapter.add(itemText);
+        todoItemsAdapter.add(new TodoItem(itemText, 3)); //TODO: input priority
         etNewItem.setText("");
         writeItems();
 
@@ -94,8 +95,8 @@ public class MainActivity extends Activity {
                 new AdapterView.OnItemLongClickListener() {
                     @Override
                     public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                        items.remove(position);
-                        itemsAdapter.notifyDataSetChanged();
+                        todoItems.remove(position);
+                        todoItemsAdapter.notifyDataSetChanged();
                         writeItems();
                         return true;
                     }
@@ -107,7 +108,7 @@ public class MainActivity extends Activity {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                         Intent intent = new Intent(MainActivity.this, EditActivity.class);
-                        editItemText = items.get(position);
+                        editItemText = todoItems.get(position).getBody();
                         intent.putExtra("edit_item_text", editItemText);
                         intent.putExtra("position", position);
                         startActivityForResult(intent, REQUEST_CODE);
@@ -123,14 +124,17 @@ public class MainActivity extends Activity {
              File todoFile = new File(filesDir, "todo.txt");
              items = new ArrayList<String>(FileUtils.readLines(todoFile));
 */
-            items = new ArrayList<String>();
+            //items = new ArrayList<String>();
+            todoItems = new ArrayList<TodoItem>();
             List<TodoItem> tItems = db.getAllTodoItems();
             // Print out properties
             for (TodoItem ti : tItems) {
-                items.add(ti.getBody());
+                //items.add(ti.getBody());
+                todoItems.add(ti);
             }
         } catch (SQLiteException e) {
-            items = new ArrayList<String>();
+            //items = new ArrayList<String>();
+            todoItems = new ArrayList<TodoItem>();
         }
     }
 
@@ -147,8 +151,8 @@ public class MainActivity extends Activity {
             for (TodoItem ti : tItems) {
                 db.deleteTodoItem(ti);
             }
-            for (String ti : items) {
-                db.addTodoItem(new TodoItem(ti, 3));
+            for (TodoItem ti : todoItems) {
+                db.addTodoItem(ti);
 
             }
         } catch (SQLiteException e) {

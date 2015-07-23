@@ -5,8 +5,8 @@ package com.yahoo.simpletodo;
  */
 public class TodoItem {
     private int id;
-    private String body;
-    private int priority;
+    public String body;
+    public int priority;
 
     public TodoItem(String body, int priority) {
         super();
